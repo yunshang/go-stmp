@@ -6,9 +6,11 @@ import (
     "os"
 	"regexp"
 	"go-stmp/pkg/utils"
+	"go-stmp/pkg/config"
 )
 
-func ReadFile(name string) {
+// ReadFile set config
+func ReadFile(name string, config *config.Config) {
 	name = regexp.QuoteMeta(name)
 	ver := regexp.MustCompile(fmt.Sprintf(`^\d.*\$s.sql$`, name))
 	files, err := utils.FindFile(ver)
@@ -21,12 +23,23 @@ func ReadFile(name string) {
     }
     defer file.Close()
 
-    scanner := bufio.NewScanner(file)
+	matches := map[string]string{}
+
+	scanner := bufio.NewScanner(file)
+    scan := ""
     for scanner.Scan() {
+		scan = regexp.QuoteMeta(scanner.Text())
+		scan = regexp.MustCompile(fmt.Sprintf(`^\d.*\$s.sql$`, scan))
         fmt.Println(scanner.Text())
     }
 
     if err := scanner.Err(); err != nil {
         log.Fatal(err)
     }
+}
+
+// SendMail  send mail
+func SendMail(name string)  {
+	config := config.New()
+	ReadFile(name, &config)
 }
