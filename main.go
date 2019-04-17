@@ -53,7 +53,7 @@ func NewApp() *cli.App {
 			Usage:   "Send mail",
 			Action:  func(c *cli.Context) error { 
 				name := c.Args().First()
-				stmp.ReadFile(name)
+				stmp.SendMail(name)
 				return nil 
 			},
 		},
