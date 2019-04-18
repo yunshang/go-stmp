@@ -7,6 +7,9 @@ import (
 	"regexp"
 	"go-stmp/pkg/utils"
 	"go-stmp/pkg/config"
+	"text/template"
+	"bytes"
+	"strconv"
 	// "crypto/tls"
 	// "net"
 	// "net/mail"
@@ -50,28 +53,36 @@ func ReadFile(name string) (map[string]string, error) {
 // SendMail  send mail
 func SendMail(name string)  {
 	config := config.New()
-	mail_config, err := ReadFile(name)
+	mailConfig, err := ReadFile(name)
 	if err != nil {
 		log.Fatal(err)
 	}
-	config.Sender = mail_config["Sender"]
-	config.To = mail_config["To"]
-	config.Subject = mail_config["Subject"]
-	config.Body = mail_config["Body"]
+	config.Sender = strconv.Quote(mailConfig["Sender"])
+	config.To = strconv.Quote(mailConfig["To"])
+	config.Subject = strconv.Quote(mailConfig["Subject"])
+	config.Body = strconv.Quote(mailConfig["Body"])
 	result := Data(&config)
 	fmt.Print(result)
 }
 
+// Data fill send mail data
 func Data(_config *config.Config) error {
-	msg := "From:" + _config.Sender + "\n" + "To:" + _config.To + "\n" + "Subject:" + _config.Subject + _config.Body 
-    err := smtp.SendMail(fmt.Sprintf("%s:%s", _config.Host,_config.Port), 
-		smtp.PlainAuth("", _config.Sender, _config.Password, _config.Host), 
-		_config.Sender, []string{_config.To}, []byte(msg))
+	buffer := new(bytes.Buffer)
+	template := template.Must(template.New("emailTemplate").Parse(emailScript()))
+    template.Execute(buffer, &_config)
+	fmt.Print(_config)
+
+    err := smtp.SendMail(fmt.Sprintf("%s:%s", _config.Host, _config.Port), 
+		smtp.PlainAuth("", _config.Sender, _config.Password, _config.Host),_config.Sender, []string{_config.To},  buffer.Bytes())
 
 	fmt.Print(err)
 	if err != nil {
 		return err
-		// log.Printf("smtp error: %s", err)
 	}
 	return err
+}
+
+// emailScript email template parse
+func emailScript() (script string) {
+    return "Sender: {{.Sender}}<br /> To: {{.To}}<br /> Subject: {{.Subject}}<br /> MIME-version: 1.0<br /> Content-Type: text/html; charset=&quot;UTF-8&quot;<br /> <br /> {{.Body}}"
 }
