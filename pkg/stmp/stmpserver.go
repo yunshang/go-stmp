@@ -10,9 +10,6 @@ import (
 	"text/template"
 	"bytes"
 	"strconv"
-	// "crypto/tls"
-	// "net"
-	// "net/mail"
 	"net/smtp"
 )
 
